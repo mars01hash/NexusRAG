@@ -980,6 +980,15 @@ body {
   min-height: 0;
 }
 
+/* ── App footer ───────────────────────── */
+.app-footer {
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--text-muted, #6b7280);
+  padding: 6px 0 10px;
+  letter-spacing: 0.01em;
+}
+
 /* ── Mobile login card ────────────────── */
 @media (max-width: 480px) {
   .login-card { padding: 32px 24px 28px; border-radius: 16px; }
