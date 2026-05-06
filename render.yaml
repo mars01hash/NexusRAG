@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: nexusrag
+    runtime: docker
+    plan: free
+    envVars:
+      - key: PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: LOG_LEVEL
+        value: INFO
+      - key: REDIS_HOST
+        fromService:
+          name: nexusrag-redis
+          type: redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          name: nexusrag-redis
+          type: redis
+          property: port
+
+  - type: redis
+    name: nexusrag-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
