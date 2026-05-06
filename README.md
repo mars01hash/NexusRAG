@@ -141,23 +141,34 @@ docker-compose down
 
 ## Deploy to Render
 
-NexusRAG supports one-click deployment to [Render](https://render.com) using the included `render.yaml`. On every deploy or restart, the FAISS index is automatically rebuilt from the files in `knowledge_data/`.
+NexusRAG supports one-click deployment to [Render](https://render.com) using the included `render.yaml`. The FAISS index is **pre-built locally** and committed to the repo so the server starts instantly without any rebuild delay on Render.
 
-> **Cold start time:** Expect 1–3 minutes on first boot while the index is being built.
+### How it works
+
+- The `data/faiss_index/` directory is committed to git and baked into the Docker image
+- On startup, Render just runs `uvicorn` — no index building, no model loading delay
+- The port opens in seconds, avoiding Render's "no open ports detected" timeout
 
 ### Steps
 
-**1. Push your repo to GitHub**
-
-Make sure `knowledge_data/` contains your documents — Render needs them to rebuild the index.
+**1. Build the index locally**
 
 ```bash
-git add knowledge_data/
-git commit -m "add knowledge base documents"
+pip install -r requirements.txt
+python ingest.py
+```
+
+This generates `data/faiss_index/` from your files in `knowledge_data/`.
+
+**2. Commit the index and push to GitHub**
+
+```bash
+git add data/faiss_index/ knowledge_data/
+git commit -m "add pre-built faiss index and knowledge base"
 git push
 ```
 
-**2. Create a new Blueprint on Render**
+**3. Create a new Blueprint on Render**
 
 - Go to [render.com](https://render.com) → **New** → **Blueprint**
 - Connect your GitHub repository
@@ -165,7 +176,7 @@ git push
   - A **web service** running the Docker container
   - A **free Redis** instance for session storage
 
-**3. Set your API key**
+**4. Set your API key**
 
 In the Render dashboard → your `nexusrag` service → **Environment**:
 
@@ -175,11 +186,9 @@ In the Render dashboard → your `nexusrag` service → **Environment**:
 
 > If using a different provider, also set `PROVIDER=openai` or `PROVIDER=deepseek` and the corresponding key (`OPENAI_API_KEY` / `DEEPSEEK_API_KEY`).
 
-**4. Deploy**
+**5. Deploy**
 
-Click **Deploy**. Render will build the Docker image, run `ingest.py` to build the index, then start the server.
-
-Your app will be live at `https://nexusrag.onrender.com` (or your custom domain).
+Click **Deploy**. Render builds the Docker image and starts the server. Your app will be live at `https://nexusrag.onrender.com` (or your custom domain).
 
 ### Environment Variables on Render
 
@@ -191,13 +200,14 @@ Your app will be live at `https://nexusrag.onrender.com` (or your custom domain)
 | `REDIS_HOST` / `REDIS_PORT` | No | Auto-linked from Redis service |
 | `OPENAI_API_KEY` | Only for OpenAI embeddings | Optional — falls back to HuggingFace |
 
-### Re-deploying after adding documents
+### Updating the knowledge base
 
-Add new files to `knowledge_data/`, commit, and push. Render will trigger a new deploy, rebuild the index, and restart the server automatically.
+Add new files to `knowledge_data/`, rebuild the index locally, commit, and push. Render will redeploy automatically.
 
 ```bash
 cp new-document.pdf knowledge_data/
-git add knowledge_data/new-document.pdf
+python ingest.py
+git add data/faiss_index/ knowledge_data/new-document.pdf
 git commit -m "add new document to knowledge base"
 git push
 ```

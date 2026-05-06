@@ -31,10 +31,8 @@ ENV/
 env/
 .venv
 
-# FAISS index and generated data
-*.pkl
-*.index
-data/
+# Generated data — keep faiss index tracked, ignore credentials
+data/users.json
 
 # Knowledge base data (optional - uncomment if you don't want to track data files)
 # knowledge_data/
