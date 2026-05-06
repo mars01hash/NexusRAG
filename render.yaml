@@ -27,3 +27,4 @@ services:
     name: nexusrag-redis
     plan: free
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
